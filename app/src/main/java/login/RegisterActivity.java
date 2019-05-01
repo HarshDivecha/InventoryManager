@@ -1,6 +1,7 @@
 package login;
 
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -8,6 +9,13 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firestore.v1.FirestoreGrpc;
 import com.three_amigos.inventorymanager.R;
 
 import java.util.regex.Matcher;
@@ -19,6 +27,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
     Context context;
     HelperFunctions helper;
+    FirebaseAuth mAuth;
 
     EditText username;
     EditText password;
@@ -27,6 +36,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     EditText phone;
     Button register;
     ProgressBar progressBar;
+    FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +46,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         setTitle("Register");
         context = RegisterActivity.this;
         helper = new HelperFunctions(context);
+        mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
 
         username = findViewById(R.id.username_register_et);
         password = findViewById(R.id.password_register_et);
@@ -59,30 +71,78 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     }
 
     private void registerUser() {
-        runFeildAuthentication();
+        if(runFeildAuthentication()){
+            registerUserOnline();
+        }
     }
 
-    public void runFeildAuthentication(){
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if(mAuth.getCurrentUser()!=null){
+            // Checking if any user who has already logged in
+        }
+    }
+
+    public void registerUserOnline(){
+        final String nameStr = username.getText().toString().trim();
+        String passStr = password.getText().toString().trim();
+        final String emailStr = email.getText().toString().trim();
+        final String phoneStr = phone.getText().toString().trim();
+
+        progressBar.setVisibility(View.VISIBLE);
+        mAuth.createUserWithEmailAndPassword(emailStr,passStr)
+                .addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        progressBar.setVisibility(View.GONE);
+                        if(task.isSuccessful()){
+
+                            // store the additional feilds in firebase
+                            User user = new User(nameStr,phoneStr,emailStr);
+
+                            FirebaseDatabase.getInstance().getReference("Users")
+                                    .child(FirebaseAuth.getInstance().getCurrentUser().getUid())
+                                    .setValue(user)
+                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if(task.isSuccessful()){
+                                                helper.makeDialog(context,"Registration Complete.","Success!!");
+                                            }
+                                        }
+                                    });
+
+                        }else {
+                            helper.makeToast(task.getException().getMessage());
+                        }
+                    }
+                });
+    }
+
+
+    public Boolean runFeildAuthentication(){
         String errorString = "Cannot be Empty !!!";
         if(username.getText().toString().trim().equals("")){        //Username !empty
             username.setError(errorString);
-            return;
+            return false;
         }else if (email.getText().toString().trim().equals("")){   //E-mail !empty
             email.setError(errorString);
-            return;
+            return false;
         }else if (phone.getText().toString().trim().equals("")){   // Phone !empty
             phone.setError(errorString);
-            return;
+            return false;
         }else if(!validatePasswords()){                            // validate passowrd fields
-            return;
+            return false;
         }
         else if(!validateEmail()){                            // validate passowrd fields
-            return;
+            return false;
         }
         else if(!validatePhone()){                            // validate passowrd fields
-            return;
+            return false;
         }
-
+        return true;
     }
 
 
