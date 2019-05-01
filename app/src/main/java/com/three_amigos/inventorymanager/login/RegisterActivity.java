@@ -1,7 +1,10 @@
-package login;
+package com.three_amigos.inventorymanager.login;
 
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -14,14 +17,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firestore.v1.FirestoreGrpc;
 import com.three_amigos.inventorymanager.R;
+import com.three_amigos.inventorymanager.globals.HelperFunctions;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import globals.HelperFunctions;
 
 public class RegisterActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -36,7 +36,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     EditText phone;
     Button register;
     ProgressBar progressBar;
-    FirebaseFirestore db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,7 +46,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         context = RegisterActivity.this;
         helper = new HelperFunctions(context);
         mAuth = FirebaseAuth.getInstance();
-        db = FirebaseFirestore.getInstance();
 
         username = findViewById(R.id.username_register_et);
         password = findViewById(R.id.password_register_et);
@@ -61,20 +59,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         register.setOnClickListener(this);
     }
 
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.register_register_btn:
-                registerUser();
-                break;
-        }
-    }
-
-    private void registerUser() {
-        if(runFeildAuthentication()){
-            registerUserOnline();
-        }
-    }
 
     @Override
     protected void onStart() {
@@ -85,6 +69,31 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         }
     }
 
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+            case R.id.register_register_btn:
+                registerUser();
+                break;
+        }
+    }
+
+
+    /**
+     * FIREBASE METHOD:
+     *
+     * CALLS REGISTER USERONLINE()
+     */
+    private void registerUser() {
+        if(runFeildAuthentication()){
+            registerUserOnline();
+        }
+    }
+
+    /**
+     * FIREBASE METHOD :
+     * REGISTER USER TO REALTIME DATABASE
+     */
     public void registerUserOnline(){
         final String nameStr = username.getText().toString().trim();
         String passStr = password.getText().toString().trim();
@@ -109,19 +118,35 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                                         @Override
                                         public void onComplete(@NonNull Task<Void> task) {
                                             if(task.isSuccessful()){
-                                                helper.makeDialog(context,"Registration Complete.","Success!!");
+                                                //helper.makeDialog(context,"Registration Complete.","Success!!");
+                                                AlertDialog dialog = new AlertDialog.Builder(context)
+                                                        .setTitle( "REGISTERED" )
+                                                        .setMessage( "Registration complete." )
+                                                        //   .setView(tableNameEditText)
+                                                        .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                                            @Override
+                                                            public void onClick(DialogInterface dialog, int which) {
+                                                                context.startActivity(new Intent(context,LoginActivity.class));
+                                                            }
+                                                        })
+                                                        //.setNegativeButton("Cancel", null)
+                                                        .create();
+                                                dialog.show();
                                             }
                                         }
                                     });
 
                         }else {
-                            helper.makeToast(task.getException().getMessage());
+                            helper.makeDialog(context,task.getException().getMessage(),"Error");
                         }
                     }
                 });
     }
 
-
+    /**
+     * FIELD VALIDATIONS
+     * @return
+     */
     public Boolean runFeildAuthentication(){
         String errorString = "Cannot be Empty !!!";
         if(username.getText().toString().trim().equals("")){        //Username !empty
@@ -144,8 +169,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         }
         return true;
     }
-
-
     public Boolean validateEmail(){
         String emailPattern = "[a-zA-Z0-9._-]+@[a-z]+\\.+[a-z]+";
         if(!(email.getText().toString().trim().matches(emailPattern))){
@@ -154,7 +177,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         }
         return true;
     }
-
     public Boolean validatePhone(){
         String phonePattern = "^[+]?[0-9]{10,13}$";
         if(!phone.getText().toString().trim().matches(phonePattern)){
@@ -163,7 +185,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         }
         return true;
     }
-
     public Boolean validatePasswords(){
         String pass = password.getText().toString().trim();
         String confirmPass = confirmPassword.getText().toString().trim();
@@ -205,6 +226,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     }
 
 
+    // NOT USED
     // Heavy Industry Constraints
     // alphanumeric+symbols+>4;
     public Boolean isValidPassword2(){

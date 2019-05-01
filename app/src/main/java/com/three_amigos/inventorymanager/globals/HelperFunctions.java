@@ -1,4 +1,4 @@
-package globals;
+package com.three_amigos.inventorymanager.globals;
 
 import android.app.Activity;
 import android.content.Context;

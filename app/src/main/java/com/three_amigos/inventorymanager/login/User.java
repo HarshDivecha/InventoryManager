@@ -1,4 +1,4 @@
-package login;
+package com.three_amigos.inventorymanager.login;
 
 public class User {
 
