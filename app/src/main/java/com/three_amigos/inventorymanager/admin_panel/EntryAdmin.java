@@ -12,5 +12,7 @@ public class EntryAdmin extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_entry_admin);
         setTitle("Admin Panel");
+
+
     }
 }

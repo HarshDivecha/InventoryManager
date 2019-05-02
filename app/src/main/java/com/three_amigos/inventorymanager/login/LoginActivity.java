@@ -26,7 +26,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     Context context;
     HelperFunctions helper;
     FirebaseAuth mAuth;
-    FirebaseUser user;
+    FirebaseUser firebaseUser;
 
     // VIEW ELEMENTS
     EditText emailEt;
@@ -43,7 +43,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 
         //GLOBALS
-        context=LoginActivity.this;
+        context=com.three_amigos.inventorymanager.login.LoginActivity.this;
         helper=new HelperFunctions(context);
         mAuth = FirebaseAuth.getInstance();
 
@@ -61,6 +61,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     public void onClick(View v) {
         switch (v.getId()){
             case R.id.login_login:
+                login();
                 break;
             case R.id.signup_login:
                 startRegisterActivity();
@@ -71,7 +72,7 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
     public void login(){
         String emailStr = emailEt.getText().toString().trim();
         String passStr = passwordEt.getText().toString().trim();
-        String fireUser="";
+        final String fireUser="";
 
         mAuth.signInWithEmailAndPassword(emailStr,passStr).addOnCompleteListener(this,
                 new OnCompleteListener<AuthResult>() {
@@ -79,7 +80,11 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
                     Log.d("Success", "createUserWithEmail:success");
-                    user = mAuth.getCurrentUser();
+
+
+                    firebaseUser = mAuth.getCurrentUser();
+                    decideActivity(firebaseUser);
+
                 } else {
                     Log.w("Error", "createUserWithEmail:failure", task.getException());
                     helper.makeDialog(context,task.getException().getMessage(),"Error");
@@ -87,16 +92,24 @@ public class LoginActivity extends AppCompatActivity implements View.OnClickList
             }
         });
 
-        fireUser = user.getEmail();
-
-        if(fireUser.equals("admin@root.com")){
-            context.startActivity(new Intent(context,com.three_amigos.inventorymanager.admin_panel.EntryAdmin.class));
-        }else{
-            context.startActivity(new Intent(context,com.three_amigos.inventorymanager.employee_panel.EmployeeEntry.class));
-        }
     }
 
 
+    public void decideActivity(FirebaseUser firebaseUser){
+        String userEmail = "";
+        if(firebaseUser.getEmail()!=null){
+            userEmail= firebaseUser.getEmail().toString();
+        }
+
+        if(!userEmail.equals("")){
+            if(userEmail.equals("admin@root.com")){
+                context.startActivity(new Intent(context,com.three_amigos.inventorymanager.admin_panel.EntryAdmin.class));
+            }
+            else{
+                context.startActivity(new Intent(context,com.three_amigos.inventorymanager.employee_panel.EmployeeEntry.class));
+            }
+        }
+    }
 
     //************   Activities   ************
     public void startRegisterActivity(){
