@@ -26,16 +26,17 @@
         android:gravity="center">
 
         <Button
+            android:id="@+id/addNew_inv_admin"
+            android:layout_width="271dp"
+            android:layout_height="wrap_content"
+            android:text="Add new inventory" />
+
+        <Button
             android:id="@+id/modify_inv_admin"
             android:layout_width="271dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
             android:text="Modify inventory " />
 
-        <Button
-            android:id="@+id/addNew_inv_admin"
-            android:layout_width="271dp"
-            android:layout_height="wrap_content"
-            android:text="Add new inventory" />
     </LinearLayout>
 </LinearLayout>
